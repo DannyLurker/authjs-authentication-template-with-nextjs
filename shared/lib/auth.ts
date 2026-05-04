@@ -1,13 +1,13 @@
 import NextAuth, { type DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "../db/prisma";
 import {
   createUserSelect,
   userRepository,
 } from "@/features/user/user.repository";
 import { signInSchema } from "./zod/auth";
 import bcrypt from "bcrypt";
+import prisma from "../db/prisma";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -33,12 +33,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           id: true,
           name: true,
           email: true,
+          image: true,
           password: true,
         });
 
-        const userRepo = userRepository();
-
-        const userDb = await userRepo.findUserByEmail(email, selectData);
+        const userDb = await userRepository.findUserByEmail(email, selectData);
 
         if (!userDb) {
           return null;
@@ -58,6 +57,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
         token.name = user.name;
         token.email = user.email;
+        token.image = user.image;
       }
 
       return token;
@@ -66,6 +66,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.id = token.id as string;
       session.user.name = token.name as string;
       session.user.email = token.email as string;
+      session.user.image = token.image as string;
 
       return session;
     },
@@ -78,6 +79,7 @@ declare module "next-auth" {
       id: string;
       name: string;
       email: string;
+      image: string;
     } & DefaultSession["user"];
   }
 }
